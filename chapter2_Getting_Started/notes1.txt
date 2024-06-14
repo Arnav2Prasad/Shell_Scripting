@@ -1,0 +1,153 @@
+Shell scripts are used most often for system administration tasks,or for combining
+existing programs to accomplish some small,specific job. Once you’ve figured out
+how to get the job done,you can bundle up the commands into a separate program,
+or script,which you can then run directly. What’s more,if it’s useful,other people
+can make use of the program,treating it as a black box,a program that gets a job
+done, without their having to know how it does so.
+In this chapter we’ll make a brief comparison between different kinds of program-
+ming languages, and then get started writing some simple shell scripts.
+
+-----------------------------------------------------------------------------------------------
+                        2.1
+
+Most medium and large-scale programs are written in a compiled language,such as
+Fortran,Ada,Pascal,C,C++,or Java. The programs are translated from their origi-
+nal source code into object code which is then executed directly by the computer’s
+hardware. 
+
+The benefit of compiled languages is that they’re efficient. Their disadvantage is that
+they usually work at a low level,dealing with bytes,integers,floating-point num-
+bers,and other machine-level kinds of objects. For example,it’s difficult in C++ to
+say something simple like “copy all the files in this directory to that directory over
+there."
+
+So-called scripting languages are usually interpreted. A regular compiled program,
+the interpreter,reads the program,translates it into an internal form,and then exe-
+cutes the program.*
+
+-------------------------------------------------------------------------------------------------
+              2.2 Why Use a Shell Script?
+
+The advantage to scripting languages is that they often work at a higher level than
+compiled languages,being able to deal more easily with objects such as files and
+directories. The disadvantage is that they are often less efficient than compiled lan-
+guages. Usually the tradeoff is worthwhile; it can take an hour to write a simple
+script that would take two days to code in C or C++,and usually the script will run
+fast enough that performance won’t be a problem. Examples of scripting languages
+include awk, Perl, Python, Ruby, and the shell.
+
+Because the shell is universal among Unix systems,and because the language is stan-
+dardized by POSIX,shell scripts can be written once and,if written carefully,used
+across a range of systems. Thus, the reasons to use a shell script are:
+      Simplicity
+          The shell is a high-level language; you can express complex operations clearly
+            and simply using it.
+      Portability
+          By using just POSIX-specified features,you have a good chance of being able to
+            move your script, unchanged, to different kinds of systems.
+      Ease of development
+          You can often write a powerful, useful script in little time.
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+                                2.3 A Simple Script
+
+Let’s start with a simple script. Suppose that you’d like to know how many users are
+currently logged in. The who command tells you who is logged in:
+
+        who
+
+On a large multiuser system,the listing can scroll off the screen before you can count
+all the users,and doing that every time is painful anyway. This is a perfect
+opportunity for automation. 
+What’s missing is a way to count the number of users.
+For that,we use the wc (word count) program,which counts lines,words,and char-
+acters. In this instance, we want wc -l, to count just lines:
+
+          who | wc -l
+
+The | (pipe) symbol creates a pipeline between the two programs: who’s output
+becomes wc’s input. The result, printed by wc, is the number of users logged in.
+
+The next step is to make this pipeline into a separate command. You do this by
+entering the commands into a regular file,and then making the file executable,with
+chmod, like so:
+
+cat > nusers                                           Create the file, copy terminal input with cat
+who | wc -l                                               Program text
+^D                                                       Ctrl-D is end-of-file
+$ chmod +x nusers                                         Make it executable
+$ ./nusers                                               Do a test run
+    6                                                       Output is what we expect
+
+
+This shows the typical development cycle for small one- or two-line shell scripts:
+first,you experiment directly at the command line. Then,once you’ve figured out the
+proper incantations to do what you want,you put them into a separate script and
+make the script executable. You can then use that script directly from now on.
+
+
+
+-----------------------------------------------------------------------------------------------
+
+        2.4 Self-Contained Scripts: The #! First Linec
+
+When the shell runs a program,it asks the Unix kernel to start a new process and
+run the given program in that process.
+The kernel knows how to do this for com-
+piled programs. Our nusers shell script isn’t a compiled program; when the shell
+asks the kernel to run it,the kernel will fail to do so,returning a “not executable for-
+mat file” error. The shell,upon receiving this error,says “Aha,it’s not a compiled
+program,it must be a shell script,” and then proceeds to start a new copy of /bin/sh
+(the standard shell) to run the program.
+
+The “fall back to /bin/sh” mechanism is great when there’s only one shell. However,
+because current Unix systems have multiple shells,there needs to be a way to tell the
+Unix kernel which shell to use when running a particular shell script. 
+
+In fact,it helps
+to have a general mechanism that makes it possible to directly invoke any program-
+ming language interpreter,not just a command shell. This is done via a special first
+line in the script file—one that begins with the two characters #!.
+
+When the first two characters of a file are #!,the kernel scans the rest of the line for
+the full pathname of an interpreter to use to run the program. (Any intervening
+whitespace is skipped.) The kernel also scans for a single option to be passed to that
+interpreter. The kernel invokes the interpreter with the given option,along with the
+rest of the command line. For example,assume a csh script* named /usr/ucb/
+whizprog, with this first line:
+
+
+Shell scripts typically start with #! /bin/sh. Use the path to a POSIX-compliant shell
+if your /bin/sh isn’t POSIX compliant. There are also some low-level “gotchas” to
+watch out for:
+
+
+
+
+
+
+
+        
+
+
+
+
+                                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
