@@ -1,0 +1,352 @@
+            2.5 Basic Shell Constructs
+
+            2.5.1 Commands and Arguments
+
+
+The shell’s most basic job is simply to execute commands. This is most obvious
+when the shell is being used interactively: you type commands one at a time,and the
+shell executes them, like so:
+
+  cd work ; ls -l whizprog.c
+  -rw-r--r-- 1 tolstoy devel 30252 Jul 9 22:52 whizprog.c
+  $ make
+
+These examples show the basics of the Unix command line. First,the format is sim-
+ple,with whitespace (space and/or tab characters) separating the different compo-
+nents involved in the command.
+
+Originally introduced in System V,but formalized in POSIX,is the convention that
+two dashes (––) should be used to signify the end of options. Any other arguments
+on the command line that look like options are instead to be treated the same as any
+other arguments (for example, treated as filenames).
+
+Finally,semicolons separate multiple commands on the same line. The shell exe-
+cutes them sequentially. If you use an ampersand (&) instead of a semicolon,the shell
+runs the preceding command in the background,which simply means that it doesn’t
+wait for the command to finish before continuing to the next command.
+
+
+The shell recognizes three fundamental kinds of commands: built-in commands,
+shell functions, and external commands:
+
+
+      Built-in commands are just that: commands that the shell itself executes. Some
+      commands are built-in from necessity,such as cd to change the directory,or read
+      to get input from the user (or a file) into a shell variable. Other commands are
+      often built into the shell for efficiency. 
+
+      Shell functions are self-contained chunks of code,written in the shell language,
+      that are invoked in the same way as a command is. 
+
+External commands are those that the shell runs by creating a separate process.
+The basic steps are:
+
+        a. Create a new process. This process starts out as a copy of the shell.
+        b. In the new process,search the directories listed in the PATH variable for the
+        given command. /bin:/usr/bin:/usr/X11R6/bin:/usr/local/bin might be a
+        typical value of PATH. (The path search is skipped when a command name
+        contains a slash character, /.)
+        c. In the new process,execute the found program by replacing the running
+        shell program with the new program.
+        d. When the program finishes,the original shell continues by reading the next
+        command from the terminal,or by running the next command in the script.
+        This is illustrated in Figure 2-1.
+
+
+---------------------------------------------------------------------------------------------------
+                2.5.2 Variables
+
+A variable is a name that you give to a particular piece of information,such as first_
+name or driver_lic_no. 
+All programming languages have variables,and the shell is no
+exception. Every variable has a value,which is the contents or information that you
+assigned to the variable. In the case of the shell,variable values can be,and often are,
+empty—that is,they contain no characters. This is legitimate,common,and useful.
+Empty values are referred to as null,and we’ll use that term a lot in the rest of the
+book.
+
+Shell variable names start with a letter or underscore,and may contain any number
+of following letters,digits,or underscores. 
+There is no limit on the number of charac-
+ters in a variable name. Shell variables hold string values,and there is also no limit
+on the number of characters that they may hold. (The Bourne shell was one of the
+few early Unix programs to follow a “no arbitrary limits” design principle.) 
+For example:
+            $ myvar=this_is_a_long_string_that_does_not_mean_much                   Assign a value
+            $ echo $myvar                                                           Print the value
+this_is_a_long_string_that_does_not_mean_much
+
+As you can see,variables are assigned values by writing the variable name,immedi-
+ately followed by an = character,and the new value,without any intervening spaces.
+
+Shell variable values are retrieved by prefixing the variable’s name with a $ character.
+Use quotes when assigning a literal value that contains spaces:
+
+      first=isaac middle=bashevis last=singer           Multiple assignments allowed on one line
+      fullname="isaac bashevis singer"                   Use quotes for whitespace in value
+      oldname=$fullname                                 Quotes not needed to preserve spaces in value
+
+
+As shown in the previous example,double quotes (discussed later in” “Quoting” [7.7])
+aren’t necessary around the value of one variable being used as the new value of a sec-
+ond variable. Using them,though,doesn’t hurt either,and is necessary when concate-
+nating variables:
+        fullname="$first $middle $last"               Double quotes required here
+
+
+-------------------------------------------------------------------------------------------------------------
+                    2.5.3 Simple Output with echo
+
+We just saw the echo command for printing out the value of myvar,and you’ve prob-
+ably used it at the command line. echo’s job is to produce output,either for prompt-
+ing or to generate data for further processing.
+
+The original echo command simply printed its arguments back to standard output,
+with each one separated from the next by a single space and terminated with a
+newline:
+
+            $ echo Now is the time for all good men
+            Now is the time for all good men
+            $ echo to come to the aid of their country.
+            to come to the aid of their country.
+
+Unfortunately,over time,different versions of echo developed. The BSD version
+accepted a first argument of –n,which would make it omit the trailing newline. For
+example (the underscore represents the terminal’s cursor):
+                $ echo -n "Enter your name: "                 Print prompt
+                Enter your name: _                             Enter data
+
+
+The System V version interpreted special escape sequences (explained shortly) within
+the arguments. For example, \c indicated that echo should not print the final
+newline:
+
+            $ echo "Enter your name: \c"           Print prompt
+            Enter your name: _                     Enter data
+  
+Escape sequences are a way to represent hard-to-type or hard-to-see characters
+within a program. When echo sees an escape sequence,it prints the corresponding
+character. 
+
+When shell scripting,the \a sequence is most useful for getting a user’s attention.
+The \0ddd sequence is useful for (very) primitive cursor manipulation by sending ter-
+minal escape sequences, but we don’t recommend this.
+
+Since many systems still default to the BSD behavior for echo,we only use its sim-
+plest form throughout this book. We use printf for more complicated output.
+
+
+----------------------------------------------------------------------------------------------------------
+                                              2.5.4 Fancier Output with printf
+
+The differences between the two versions of echo led to one of the most infamous of
+the Unix-variant portability headaches. 
+
+During the first round of standardization for
+POSIX,the committee members could not agree on how to standardize echo,so they
+came up with a compromise. 
+
+While echo was part of the POSIX standard,the stan-
+dard didn’t specify the behavior if the first argument was –n,or if any argument con-
+tained escape sequences
+
+Instead the behavior was left as implementation-defined,
+meaning that each vendor was required to document what its version of echo does.*
+In effect, echo could be used portably only if it was used in the simplest fashion.
+Instead,they adopted the printf command from the Ninth Edition Research Unix
+system. This command is more flexible than echo,but at the cost of some added
+complexity.
+
+The printf command is modeled after the printf( ) library routine from the C
+library. 
+It closely duplicates the facilities of that function (see the manual pages for
+printf(3)),and it’s likely that if you’ve done any programming in C,C++, awk,Perl,
+Python,or Tcl,you’re familiar with the basics. Of course,there are a few quirks spe-
+cific to the shell-level version.
+
+The printf command can output a simple string just like the echo command:
+                  printf "Hello, world\n"
+
+The main difference that you will notice immediately is that,unlike echo, printf does
+not automatically supply a newline. You must specify it explicitly as \n. 
+The full syntax of the printf command has two parts:
+                    printf format-string [arguments ...]
+
+
+The first part is a string describing the desired output; this is best supplied as a string
+constant in quotes. This string is a mixture of characters to be printed literally,and
+format specifications,which are special placeholders that describe how to print each
+corresponding argument.
+
+
+The second part is an argument list,such as a list of strings or variable values,that
+correspond to the format specifications. (If there are more arguments than format
+specifications, printf cycles through the format specifications in the format string,
+reusing them in order,until done.) A format specification is preceded by a percent
+sign (%) and the specifier is one of the characters described later in the book. Two of
+the main format specifiers are %s for strings and %d for decimal integers.
+
+Within the format string,regular characters are printed verbatim. Escape sequences,
+similar to those of echo,are interpreted and then output as the corresponding charac-
+ter. Format specifiers,which begin with the character % and end with one of a
+defined set of letters,control the output of the following corresponding arguments.
+
+For example, %s is used for strings:
+          $ printf "The first program always prints '%s, %s!'\n" Hello world
+          The first program always prints 'Hello, world!
+
+
+--------------------------------------------------------------------------------------------------------------
+                                    2.5.5 Basic I/O Redirection
+
+The idea is that programs should have a data source,a data sink (where data
+goes),and a place to report problems. 
+These are referred to by the names standard
+input, standard output,and standard error,respectively. 
+
+nix programs follow this design. By default,they read standard
+input,write standard output,and send error messages to standard error. Such pro-
+grams are called filters,for reasons that will become clear shortly. The default for
+standard input,standard output,and standard error is the terminal. T
+
+You may be wondering,who initializes standard input,output,and error for a run-
+ning program? After all, somebody has to open these files for any given program,even
+the interactive shell that each user sees at login!
+
+The answer is that when you log in,Unix arranges the default place for standard
+input,output,and error to be your terminal. I/O redirection is the process by which
+you,at the terminal interactively,or from within a shell script,then arrange to
+change the places from which input comes or to which output goes.
+
+“Standard I/O,” as used here, should not be confused with the C library’s standard I/O library, whose inter-
+face is defined in <stdio.h>, although that library’s job is to provide this abstraction to C programs
+--------------------------------------------------------------------------------------------------------------------
+                  2.5.5.1 Redirection and pipelines
+
+The shell provides several syntactic notations for specifying how to change the
+default I/O sources and destinations. We cover the basic ones here; later we’ll pro-
+vide the full story. Moving from simple to complex, these notations are as follows:
+
+Change standard input with <
+  Use program < file to make program’s standard input be file:
+        tr -d '\r' < dos-file.txt ...
+
+
+Change standard output with >
+    Use program > file to make program’s standard output be file:
+      tr -d '\r' < dos-file.txt > unix-file.txt
+
+This tr invocation removes ASCII carriage-return characters from dos-file.txt,
+placing the transformed data into unix-file.txt. The original data in dos-file.
+txt is not changed. (The tr command is discussed in more detail in Chapter 5.)
+
+
+The > redirector creates the destination file if it doesn’t exist. However,if the file
+does exist, then it is truncated; all existing contents are lost.
+
+Append to a file with >>
+  Use program >> file to send program’s standard output to the end of file.
+    Like >,the >> operator creates the destination file if it doesn’t exist. However,if
+    it already exists,instead of truncating the file,any new data generated by the
+    running program is appended to the end of the file:
+    for f in dos-file*.txt
+    do
+    tr -d '\r' < $f >> big-unix-file.txt
+    done
+    (The for loop is described in “Looping” [6.4].)
+
+Create pipelines with |
+    Use program1 | program2 to make the standard output of program1 become the
+    standard input of program2.
+
+
+
+Although < and > connect input and output to files,a pipeline hooks together
+two or more running programs. The standard output of the first program
+becomes the standard input of the second one. 
+
+In favorable cases,pipelines can
+run as much as ten times faster than similar code using temporary files. Most of
+this book is about learning how to hook together the various tools into pipelines
+of increasing complexity and power. 
+For example:
+          tr -d '\r' < dos-file.txt | sort > unix-file.txt
+This pipeline removes carriage-return characters from the input file,and then
+sorts the data, sending the resulting output to the destination file.
+
+
+
+When working with the Unix tools,it helps to visualize data as being similar to water
+in a pipeline. Untreated water goes into a water-processing plant and passes through
+a variety of filters, until the final output is water fit for human consumption.
+Similarly,when scripting,you often have raw data in some defined input format,and
+you need processed data as the result. (Processing may mean any number of things:
+sorting,summing and averaging,formatting for printing,etc.) You start with the
+original data,and then construct a pipeline,step by step,where each stage in the
+pipeline further refines the data.
+
+-------------------------------------------------------------------------------------------------------------
+                  2.5.5.2 Special files: /dev/null and /dev/tty
+
+Unix systems provide two special files that are particularly useful in shell program-
+ming. The first file, /dev/null,is often known as the “bit bucket.” Data sent to this
+file is thrown away by the system. In other words,a program writing data to this file
+always believes that it has successfully written the data,but in practice,nothing is
+done with it. This is useful when you need a command’s exit status (described in
+“Exit Statuses” [6.2]) but not its output. For example,to test if a file contains a
+pattern:
+
+                if grep pattern myfile > /dev/null
+                then
+                ... Pattern is there
+                else
+                ... Pattern is not there
+                fi
+
+In contrast to writes,reading from /dev/null always returns end-of-file immediately.
+Reading from /dev/null is rare in shell programming,but it’s important to know
+how the file behaves.
+
+
+The other special file is /dev/tty. When a program opens this file,Unix automati-
+cally redirects it to the real terminal (physical console or serial port,or pseudotermi-
+nal for network and windowed logins) associated with the program. This is
+particularly useful for reading input that must come from a human,such as a pass-
+word. It is also useful, although less so, for generating error messages:
+          
+          printf "Enter new password: "                 Prompt for input
+          stty -echo                                     Turn off echoing of typed characters
+          read pass < /dev/tty                           Read password
+          printf "Enter again: "                         Prompt again
+          read pass2 < /dev/tty                         Read again for verification
+          stty echo                                      Don't forget to turn echoing back on
+
+The stty (set tty) command controls various settings of your terminal (or window).*
+The –echo option turns off the automatic printing (echoing) of every character you
+type; stty echo restores it.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
