@@ -1,0 +1,150 @@
+                        2.5.6 Basic Command Searching
+
+Earlier,we mentioned that the shell searches for commands along the search path,
+$PATH. 
+This is a colon-separated list of directories in which commands are found.
+Commands may be compiled executables or shell scripts; there’s no real distinction
+from the user’s perspective.
+
+              $ echo $PATH
+              /bin:/usr/bin:/usr/X11R6/bin:/usr/local/bin
+
+The term “bin” for directories that hold executables is short for binary. However,
+you can also think of it as having the corresponding English meaning—a place to
+hold things; in this case, executable programs.
+
+When you write your own scripts,it would be nice to have your own bin in which to
+place them,and have the shell find them automatically. This is easy to do. Just cre-
+ate your own bin directory and add it to the list in $PATH:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------
+                              2.6 Accessing Shell Script Arguments
+
+The so-called positional parameters represent a shell script’s command-line argu-
+ments. They also represent a function’s arguments within shell functions. Individual
+arguments are named by integer numbers. For historical reasons,you have to enclose
+the number in braces if it’s greater than nine:
+
+                      echo first arg is $1
+                      echo tenth arg is ${10}
+
+Special “variables” provide access to the total number of arguments that were
+passed,and to all the arguments at once. We provide the details later,in “Positional
+parameters”
+
+Suppose you want to know what terminal a particular user is using. Well,once
+again,you could use a plain who command and manually scan the output. However,
+that’s difficult and error prone,especially on systems with lots of users. 
+
+This time
+what you want to do is search through who’s output for a particular user. Well,any-
+time you want to do searching,that’s a job for the grep command,which prints lines
+matching the pattern given in its first argument. 
+
+Suppose you’re looking for user
+betsy because you really need that flag you ordered from her:
+                  
+                  $ who | grep betsy Where is betsy?
+                  betsy pts/3 Dec 27 11:07 (flags-r-us.example.com)
+
+Now that we know how to find a particular user,we can put the commands into a
+script, with the script’s first argument being the username we want to find:
+
+                $ cat > finduser                               Create new file
+                #! /bin/sh
+                # finduser --- see if user named by first argument is logged in
+                who | grep $1
+                ^D End-of-file
+
+                $ chmod +x                                       finduser Make it executable
+                $ ./finduser betsy                               Test it: find betsy
+                betsy pts/3 Dec 27 11:07                         (flags-r-us.example.com)
+
+                $ ./finduser benjamin                             Now look for good old Ben
+                benjamin dtlocal Dec 27 17:55                       (kites.example.com)
+
+                $ mv finduser $HOME/bin                             Save it in our personal bin
+
+The line beginning with # finduser … is a comment. 
+
+The shell ignores everything
+from the # to the end of the line. (This is serendipitous; the special #! line described
+earlier acts as a comment when the shell reads a script.) Commenting your programs
+is always a good idea. It will help someone else,or you a year from now,to figure out
+what you were doing and why. Once we see that the program works,we move it to
+our personal bin directory.
+
+This program isn’t perfect. What happens if we don’t give it any arguments?
+                    $ finduser
+                    Usage: grep [OPTION]... PATTERN [FILE]...
+                    Try 'grep --help' for more information.
+
+
+We will see in “The test Command” [6.2.4],how to test the number of command-
+line arguments and take appropriate action when the right number isn’t supplied.
+
+--------------------------------------------------------------------------------------------------------------------------
+                        2.7 Simple Execution Tracing
+
+Because program development is a human activity,there will be times when your
+script just doesn’t do what you want it to do. One way to get some idea of what your
+program is doing is to turn on execution tracing
+
+This causes the shell to print out
+each command as it’s executed,preceded by “ + ”—that is,a plus sign followed by a
+space. (You can change what gets printed by assigning a new value to the PS4 shell
+variable.) 
+For example:
+                $ sh -x nusers               Run with tracing on
+                + who                       Traced commands
+                + wc -l
+                7                           Actual output
+
+
+You can turn execution tracing on within a script by using the command set -x,and
+turn it off again with set +x. This is more useful in fancier scripts,but here’s a sim-
+ple program to demonstrate:
+                $ cat > trace1.sh                   Create script
+                #! /bin/sh
+                set -x                               Turn on tracing
+                echo 1st echo                         Do something
+                set +x                               Turn off tracing
+                echo 2nd echo                       Do something else
+                ^D                                   Terminate with end-of-file
+                $ chmod +x trace1.sh                   Make program executable
+                $ ./trace1.sh                         Run it
+                + echo 1st echo                   First traced line
+                1st echo                       Output from command
+                + set +x                           Next traced line
+                2nd echo                     Output from next command
+
+When run,the set -x is not traced,since tracing isn’t turned on until after that com-
+mand completes. Similarly,the set +x is traced,since tracing isn’t turned off until
+after it completes. The final echo isn’t traced, since tracing is turned off at that point.
+
+
+
+
+
+
+
+
