@@ -4,7 +4,7 @@ Earlier,we mentioned that the shell searches for commands along the search path,
 $PATH. 
 This is a colon-separated list of directories in which commands are found.
 Commands may be compiled executables or shell scripts; there’s no real distinction
-from the user’s perspective.
+from the user’s perspective.  
 
               $ echo $PATH
               /bin:/usr/bin:/usr/X11R6/bin:/usr/local/bin
