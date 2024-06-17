@@ -1,0 +1,108 @@
+Textual data is more flexible than binary data
+
+In this chapter,we look at two fundamental operations that show up repeatedly in
+shell scripting: text searching—looking for specific lines of text—and text substitu-
+tion—changing the text that is found
+
+
+-------------------------------------------------------
+      3.1 Searching for Text
+
+The workhorse program for finding text (or “matching text,” in Unix jargon) is grep
+
+grep
+      The original text-matching program. It uses Basic Regular Expressions (BREs) as
+      defined by POSIX, and as we describe later in the chapter.
+      
+egrep
+      “Extended grep.” This program uses Extended Regular Expressions (EREs),
+      which are a more powerful regular expression notation. The cost of EREs is that
+      they can be more computationally expensive to use. On the original PDP-11s
+      this was important; on modern systems, there is little difference.
+
+
+fgrep
+      “Fast grep.” This variant matches fixed strings instead of regular expressions
+      using an algorithm optimized for fixed-string matching. The original version was
+      also the only variant that could match multiple strings in parallel. In other
+      words, grep and egrep could match only a single regular expression,whereas
+      fgrep used a different algorithm that could match multiple strings,effectively
+      testing each input line for a match against all the requested search strings
+
+
+Both fgrep and egrep were also available,but they
+were marked as “deprecated,” meaning that they would be removed from a subse-
+quent standard. And indeed,the 2001 POSIX standard only includes the merged
+grep command. However,in practice,both egrep and fgrep continue to be available
+on all Unix and Unix-like systems
+
+
+--------------------------------------------------------------------------------------
+                            3.1.1 Simple grep
+
+The simplest use of grep is with constant strings:
+
+                  $ who Who is logged on
+                  tolstoy tty1 Feb 26 10:53
+                  tolstoy pts/0 Feb 29 10:59
+                  tolstoy pts/1 Feb 29 10:59
+                  tolstoy pts/2 Feb 29 11:00
+                  tolstoy pts/3 Feb 29 11:00
+                  tolstoy pts/4 Feb 29 11:00
+                  austen pts/5 Feb 29 15:39 (mansfield-park.example.com)
+                  austen pts/6 Feb 29 15:39 (mansfield-park.example.com)
+
+                  
+                  $ who | grep -F austen Where is austen logged on?
+                  austen pts/5 Feb 29 15:39 (mansfield-park.example.com)
+                  austen pts/6 Feb 29 15:39 (mansfield-park.example.com)
+                  
+This example used the –F option,to search for the fixed string austen. And in fact,as
+long as your pattern doesn’t contain any regular expression metacharacters, grep’s
+default behavior is effectively the same as if you’d used the –F option:
+$ who | grep austen No -F, same result
+                austen pts/5 Feb 29 15:39 (mansfield-park.example.com)
+                austen pts/6 Feb 29 15:39 (mansfield-park.example.com)
+
+----------------------------------------------------------------------------------------
+                  3.2 Regular Expressions
+
+                  3.2.1 What Is a Regular Expression?
+
+                  
+Regular expressions are a notation that lets you search for text that fits a particular
+criterion,such as “starts with the letter a.” The notation lets you write a single
+expression that can select, or match, multiple data strings.
+
+Above and beyond traditional Unix regular expression notation,POSIX regular
+expressions let you:
+• Write regular expressions that express locale-specific character sequence order-
+ings and equivalences
+• Write your regular expressions in a way that does not depend upon the underly-
+ing character set of the system.
+
+
+A large number of Unix utilities derive their power from regular expressions of one
+form or another. A partial list includes the following:
+        • The grep family of tools for finding matching lines of text: grep and egrep,which
+        are always available, as well as the nonstandard but useful agrep utility*
+        • The sed stream editor,for making changes to an input stream,described later in
+        the chapter
+        • String processing languages,such as awk,Icon,Perl,Python,Ruby,Tcl,and
+        others
+
+In terms of the nuts and bolts,regular expressions are built from two basic compo-
+nents: ordinary characters and special characters. An ordinary character is any char-
+acter that isn’t special,as defined in the following table. In some contexts even
+special characters are treated as ordinary characters. Special characters are often
+called metacharacters,a term that we use throughout the rest of this chapter.
+
+
+                  
+                                            
+
+
+
+
+      
+
